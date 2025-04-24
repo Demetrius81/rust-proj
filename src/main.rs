@@ -1,31 +1,51 @@
-use std::net::SocketAddr;
-use axum::{response::Html, routing::get, Router};
+use anyhow::Context;
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Json, Router};
+use serde::Serialize;
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new().route("/hello", get(hello));
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-
-    axum::serve(listener, app).await.unwrap();
+#[derive(Serialize)]
+struct Response {
+    message: &'static str,
 }
 
-// #[tokio::main]
-// async fn main() {
-//     let routes_hello = Router::new().route("/hello", get(|| async {Html("Hello <strong>World!!!</strong>")}));
+struct AppError(anyhow::Error);
 
-//     // region:   --- Start server
+impl From<anyhow::Error> for AppError {
+    fn from(value: anyhow::Error) -> Self {
+        Self(value)
+    }
+}
 
-//     let addr = SocketAddr::from(([127,0,0,1], 8080));
-//     println!("--->>>LISTENING on {addr}\n");
-//     axum_server::bind(addr)
-//         .serve(routes_hello.into_make_service())
-//         .await
-//         .unwrap();
+impl IntoResponse for AppError {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.0.to_string()).into_response()
+    }
+}
 
-//     // endregion:    --- Start server
-// }
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let app = Router::new()
+        .route("/hello", get(hello_json))
+        .layer(tower_http::catch_panic::CatchPanicLayer::new());
 
-async fn hello() -> &'static str {
-    "Hello <strong>World!!!</strong>"
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.context(">>> Failed to bind TCP listener")?;
+
+    axum::serve(listener, app).await.context(">>> axum::serve failed")?;
+
+    Ok(())
+}
+
+async fn hello_json() -> Result<(StatusCode, Json<Response>), AppError> {
+    let response = Response {
+        message: genetate_message().context(">>> Failed to generate message")?,
+    };
+
+    Ok((StatusCode::OK, Json(response)))
+}
+
+fn genetate_message() -> anyhow::Result<&'static str> {
+    if rand::random() {
+        anyhow::bail!("no message")
+    }
+
+    Ok("Hello <strong>World!!!</strong>")
 }
