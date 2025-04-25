@@ -27,9 +27,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/hello", get(hello_json))
         .layer(tower_http::catch_panic::CatchPanicLayer::new());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.context(">>> Failed to bind TCP listener")?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+        .await
+        .context(">>> Failed to bind TCP listener")?;
 
-    axum::serve(listener, app).await.context(">>> axum::serve failed")?;
+    axum::serve(listener, app)
+        .await
+        .context(">>> axum::serve failed")?;
 
     Ok(())
 }
