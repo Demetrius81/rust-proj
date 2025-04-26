@@ -1,7 +1,9 @@
 use clap::{Arg, Command};
 use rust_proj::{commands, settings};
+use dotenv::dotenv;
 
 pub fn main() -> anyhow::Result<()> {
+    dotenv().ok();
     let mut command = Command::new("Sample CLI App")
         .arg(
             Arg::new("config")
@@ -22,19 +24,19 @@ pub fn main() -> anyhow::Result<()> {
     let settings = settings::Settings::new(config_location, "APP")?;
 
     println!(
-        "db url: {:?}",
+        ">>> db url: {:?}",
         settings
             .database
             .url
-            .unwrap_or("missing database url".to_string())
+            .unwrap_or(">>> (!) missing database url".to_string())
     );
 
     println!(
-        "log level: {:?}",
+        ">>> log level: {:?}",
         settings
             .logging
             .log_level
-            .unwrap_or("missing log level".to_string())
+            .unwrap_or(">>> (!) missing log level".to_string())
     );
 
     commands::handle(&matches)?;
