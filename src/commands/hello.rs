@@ -6,6 +6,7 @@ pub fn configure() -> Command {
 	Command::new(COMMAND_NAME).about("Hello world!")
 }
 
+#[allow(unused)]
 pub fn handle(matches: &ArgMatches) -> anyhow::Result<()> {
 	println!("Hello world!");
 
