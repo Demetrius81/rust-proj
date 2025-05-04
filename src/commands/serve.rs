@@ -1,3 +1,6 @@
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
+use axum::Router;
 use clap::{value_parser, Arg, ArgMatches, Command};
 
 use crate::settings::Settings;
@@ -16,10 +19,31 @@ pub fn configure() -> Command {
 	)
 }
 
-pub fn handle(matches: &ArgMatches, _settings: &Settings) -> anyhow::Result<()> {
+pub fn handle(matches: &ArgMatches, settings: &Settings) -> anyhow::Result<()> {
 	let port = *matches.get_one::<u16>("port").unwrap_or(&8080);
 
-	println!("TBD: Start the HTTP server on port {}", port);
+	start_tokio(port, settings);
+
+	Ok(())
+}
+
+fn start_tokio(port: u16, _settings: &Settings) -> anyhow::Result<()> {
+	tokio::runtime::Builder::new_multi_thread()
+		.enable_all()
+		.build()?
+		.block_on(async move {
+			let addr = SocketAddr::new(
+				IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+				port,
+			);
+
+			let router = Router::new();
+
+			let listener = tokio::net::TcpListener::bind(addr).await?;
+			axum::serve(listener, router.into_make_service()).await?;
+
+			Ok::<(), anyhow::Error>(())
+		})?;
 
 	Ok(())
 }

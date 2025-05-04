@@ -23,22 +23,6 @@ pub fn main() -> anyhow::Result<()> {
 
     let settings = settings::Settings::new(config_location, "APP")?;
 
-    // println!(
-    //     ">>> db url: {:?}",
-    //     settings
-    //         .database
-    //         .url
-    //         .unwrap_or(">>> (!) missing database url".to_string())
-    // );
-
-    // println!(
-    //     ">>> log level: {:?}",
-    //     settings
-    //         .logging
-    //         .log_level
-    //         .unwrap_or(">>> (!) missing log level".to_string())
-    // );
-
     commands::handle(&matches, &settings)?;
 
     Ok(())
